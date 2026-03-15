@@ -12,7 +12,30 @@
 
 using namespace emscripten;
 
+// 去掉其他符号的正则
 static const std::regex CLEANUP_REGEX("[^A-Za-zéÉàèùÀÈÙâêîôûÂÊÎÔÛëïüÿËÏÜçÇ ]+");
+
+// 变为小写
+std::string french_to_lower(std::string text) {
+    static const std::unordered_map<std::string,std::string> map = {
+        {"É","é"},{"À","à"},{"È","è"},{"Ù","ù"},
+        {"Â","â"},{"Ê","ê"},{"Î","î"},{"Ô","ô"},{"Û","û"},
+        {"Ë","ë"},{"Ï","ï"},{"Ü","ü"},
+        {"Ç","ç"}
+    };
+    for (auto &p : map) {
+        size_t pos = 0;
+        while ((pos = text.find(p.first, pos)) != std::string::npos) {
+            text.replace(pos, p.first.size(), p.second);
+            pos += p.second.size();
+        }
+    }
+    for (char& c : text) {
+        if (c >= 'A' && c <= 'Z')
+            c += 32;
+    }
+    return text;
+}
 
 // 定义一个结构体来持有编译后的正则和对应的替换字符串
 struct CompiledRule {
@@ -58,20 +81,17 @@ std::vector<std::string> apion_process(const std::string& input_text) {
     // 搞定 g_exception_map，不过其实没用到，有接口
     init_exceptions("exceptions.bin");
 
-    // 1. 预处理：转小写
-    std::string text = input_text;
-    std::transform(text.begin(), text.end(), text.begin(), 
-                   [](unsigned char c){ return std::tolower(c); });
+    // 1. 预处理：移除特殊字符
+    std::string cleaned = std::regex_replace(input_text, CLEANUP_REGEX, "");
 
-    // 2. 移除特殊字符 (对应 SPE.sub("", texte))
-    // 使用 regex_replace 将所有匹配 SPE 的字符替换为空
-    std::string cleaned = std::regex_replace(text, CLEANUP_REGEX, "");
+    // 2. 预处理：转小写
+    cleaned = french_to_lower(cleaned);
 
     // 3. 分词 (按空格分割)
     std::istringstream iss(cleaned);
     std::string mot;
 
-    // 返回结果，假设日常用语每个单词平均4~5个字母
+    // 返回结果，假设日常用语每个单词平均4~5个字母，提前分配
     std::vector<std::string> result_list;
     result_list.reserve(input_text.size() / 5);
 
@@ -92,7 +112,8 @@ std::vector<std::string> apion_process(const std::string& input_text) {
 
                 for (const auto& compiled_rule : g_compiled_rules) {
                     // 使用 regex_search 查找匹配
-                    if (std::regex_search(current_word, match_result, compiled_rule.pattern)) {
+                    if (std::regex_search(current_word, match_result, compiled_rule.pattern,
+                      std::regex_constants::match_continuous)) {
                         
                         // 手动截断字符串
                         size_t match_len = match_result.length(0);
