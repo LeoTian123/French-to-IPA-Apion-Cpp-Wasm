@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Apion Wasm Demo</title>
+</head>
+<body>
+    <h1>France to IPA: Apion-Cpp-Wasm</h1>
+    <textarea id="input" rows="10" cols="50">Bonjour le monde! J'aime le français.</textarea>
+    
+    <button onclick="runConversion()">Convert</button>
+    <pre id="output"></pre>
+
+    <script type="module">
+        import init from './apion_core.js';
+
+        let Module;
+        
+        // 预加载
+        (async () => {
+            Module = await init();
+            console.log('Wasm module loaded', Module);
+        })();
+
+        window.runConversion = async function() {
+            const inputText = document.getElementById('input').value;
+            const outputDiv = document.getElementById('output');
+            
+            if (!Module) {
+                outputDiv.innerText = "Wasm module has not finished loading, please wait...";
+                return;
+            }
+            
+            outputDiv.innerText = "Processing...";
+            
+            // 调用 C++ 函数
+            const resultVec = Module.apion_process(inputText);
+            
+            // JS 数组显示
+            outputDiv.innerText = `Result: ${resultVec.join(' ')}`;
+        };
+    </script>
+</body>
+</html>
