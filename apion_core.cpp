@@ -10,11 +10,12 @@
 #include "rules_conversion.h"
 // #include "rules_exceptions.h"
 #include "r_exc.h"
+#include "exceptionLoader.h"
 
 using namespace emscripten;
 
 const std::regex CLEANUP_REGEX(
-    "[0-9•—–,?!\\r’°“”…\\u00a0«»\\\\/\\[\\]\\(\\)<>=+%$&#;:*{}\\'`\\-]"
+    "[0-9•—–,?!\\r’°“”…«»\\\\/\\[\\]\\(\\)<>=+%$&#;:*{}\\'`\\-]"
 );
 
 std::vector<std::string> apion_process(const std::string& input_text) {
@@ -35,24 +36,18 @@ std::vector<std::string> apion_process(const std::string& input_text) {
     
     // 预加载规则引用，避免重复查找
     const auto& rules = CONVERSION_RULES;
-    const auto& exceptions = EXCEPTIONS;
+    init_exceptions("exceptions.bin");
 
     while (iss >> mot) {
         std::string current_word = mot;
         std::string result_buffer = "";
         bool is_exception = false;
 
-        // 4. 检查例外词典 (线性查找)
-        for (const auto& ex : exceptions) {
-            if (ex.first == current_word) {
-                result_buffer = ex.second;
-                is_exception = true;
-                break;
-            }
-        }
-
-        if (!is_exception) {
-            // 5. 常规转换循环 (对应 until mot.empty?)
+        // 4. 检查例外词典 
+        result_buffer = get_exception(current_word);
+        
+        // 5. 常规转换循环 (对应 until mot.empty?)
+        if (result_buffer.empty()) {
             while (!current_word.empty()) {
                 bool matched = false;
 

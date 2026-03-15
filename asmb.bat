@@ -5,5 +5,6 @@ emcc apion_core.cpp ^
   -s EXPORT_ES6=1 ^
   -s ALLOW_MEMORY_GROWTH=1 ^
   -lembind ^
+  --preload-file exceptions.bin ^
   -o web/apion_core.js ^
   -I .
