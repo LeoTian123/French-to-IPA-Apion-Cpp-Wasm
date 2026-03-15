@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>French to IPA - Apion</title>
+    
+    <!-- 引入法语友好字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@600&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+    <!-- 引入IPA友好字体 -->
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/charis-sil/index.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #0055A4; /* 法国蓝 */
+            --accent-color: #EF4135;  /* 法国红 */
+            --bg-color: #f9f9f9;
+            --border-color: #ccc;
+            --font-main: 'Nunito', sans-serif;
+            --font-title: 'Crimson Pro', serif;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-family: var(--font-title);
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 2.2rem;
+        }
+
+        /* 输入框样式 */
+        textarea#input {
+            width: 100%;
+            max-width: 600px;
+            height: 150px;
+            padding: 15px;
+            font-family: var(--font-main);
+            font-size: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        textarea#input:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* 特殊字符按钮区域 */
+        .char-palette {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+        }
+
+        .char-group {
+            margin-bottom: 5px;
+        }
+
+        .char-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .group-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+            display: block;
+            font-weight: 600;
+        }
+
+        .char-btn {
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 5px 10px;
+            margin-right: 0px;
+            margin-bottom: 0px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-size: 16px;
+            transition: all 0.2s;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .char-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* 转换按钮样式 */
+        button#convert-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 15px 0;
+            box-shadow: 0 4px 6px rgba(0,85,164,0.3);
+            transition: transform 0.1s, box-shadow 0.2s;
+            font-family: var(--font-main);
+        }
+
+        button#convert-btn:hover {
+            background-color: #004488;
+            box-shadow: 0 6px 8px rgba(0,85,164,0.4);
+        }
+
+        button#convert-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* 输出框样式 (带框且可换行) */
+        .output-container {
+            width: 100%;
+            max-width: 600px;
+            min-height: 100px;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            background-color: white;
+            padding: 15px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .output-label {
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            background: var(--bg-color);
+            padding: 0 5px;
+            font-size: 0.8rem;
+            color: #888;
+            font-weight: 600;
+        }
+
+        pre#output {
+            margin: 0;
+            font-family: "Charis SIL";
+            font-size: 18px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #222;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. 标题 -->
+    <h1>French to IPA: Apion-Cpp-Wasm</h1>
+
+    <!-- 2. 输入框 -->
+    <textarea id="input" placeholder="Entrez votre texte français ici...">Bonjour le monde! J'aime le français.</textarea>
+    
+    <!-- 3. 特殊字符按钮区 (按指定顺序排列) -->
+    <div class="char-palette">
+        <!-- Accent aigu -->
+        <div class="char-group">
+            <!-- <span class="group-label">Accent aigu (é)</span> -->
+            <button class="char-btn" onclick="insertChar('é')">é</button>
+            <button class="char-btn" onclick="insertChar('É')">É</button>
+        </div>
+
+        <!-- Accent grave -->
+        <div class="char-group">
+            <!-- <span class="group-label">Accent grave (à, è, ù)</span> -->
+            <button class="char-btn" onclick="insertChar('à')">à</button>
+            <button class="char-btn" onclick="insertChar('è')">è</button>
+            <button class="char-btn" onclick="insertChar('ù')">ù</button>
+            <button class="char-btn" onclick="insertChar('À')">À</button>
+            <button class="char-btn" onclick="insertChar('È')">È</button>
+            <button class="char-btn" onclick="insertChar('Ù')">Ù</button>
+        </div>
+
+        <!-- Accent circonflexe -->
+        <div class="char-group">
+            <!-- <span class="group-label">Accent circonflexe (â, ê, î, ô, û)</span> -->
+            <button class="char-btn" onclick="insertChar('â')">â</button>
+            <button class="char-btn" onclick="insertChar('ê')">ê</button>
+            <button class="char-btn" onclick="insertChar('î')">î</button>
+            <button class="char-btn" onclick="insertChar('ô')">ô</button>
+            <button class="char-btn" onclick="insertChar('û')">û</button>
+            <button class="char-btn" onclick="insertChar('Â')">Â</button>
+            <button class="char-btn" onclick="insertChar('Ê')">Ê</button>
+            <button class="char-btn" onclick="insertChar('Î')">Î</button>
+            <button class="char-btn" onclick="insertChar('Ô')">Ô</button>
+            <button class="char-btn" onclick="insertChar('Û')">Û</button>
+        </div>
+
+        <!-- Tréma -->
+        <div class="char-group">
+            <!-- <span class="group-label">Tréma (ë, ï, ü,)</span> -->
+            <button class="char-btn" onclick="insertChar('ë')">ë</button>
+            <button class="char-btn" onclick="insertChar('ï')">ï</button>
+            <button class="char-btn" onclick="insertChar('ü')">ü</button>
+            <button class="char-btn" onclick="insertChar('Ë')">Ë</button>
+            <button class="char-btn" onclick="insertChar('Ï')">Ï</button>
+            <button class="char-btn" onclick="insertChar('Ü')">Ü</button>
+        </div>
+
+        <!-- Cédille -->
+        <div class="char-group">
+            <!-- <span class="group-label">Cédille (ç)</span> -->
+            <button class="char-btn" onclick="insertChar('ç')">ç</button>
+            <button class="char-btn" onclick="insertChar('Ç')">Ç</button>
+        </div>
+    </div>
+
+    <!-- 4. 转换按钮 -->
+    <button id="convert-btn" onclick="runConversion()">Convert to IPA</button>
+
+    <!-- 5. 输出框 (带框，可换行) -->
+    <div class="output-container">
+        <span class="output-label">IPA Result</span>
+        <pre id="output"></pre>
+    </div>
+
+    <script type="module">
+        import init from './apion_core.js';
+
+        let Module;
+        
+        // 预加载
+        (async () => {
+            Module = await init();
+            console.log('Wasm module loaded', Module);
+        })();
+
+        // 辅助函数：插入特殊字符
+        window.insertChar = function(char) {
+            const textarea = document.getElementById('input');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            
+            // 在光标处插入字符
+            textarea.value = text.substring(0, start) + char + text.substring(end);
+            
+            // 重新聚焦并将光标移到插入字符之后
+            textarea.focus();
+            textarea.selectionStart = textarea.selectionEnd = start + char.length;
+        };
+
+        window.runConversion = async function() {
+            const inputText = document.getElementById('input').value;
+            const outputDiv = document.getElementById('output');
+            
+            if (!Module) {
+                outputDiv.innerText = "Wasm module has not finished loading, please wait...";
+                return;
+            }
+            
+            outputDiv.innerText = "Processing...";
+            
+            // 调用 C++ 函数
+            const resultVec = Module.apion_process(inputText);
+            
+            // JS 数组显示
+            outputDiv.innerText = resultVec.join(' ');
+        };
+    </script>
+</body>
+</html>
