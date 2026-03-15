@@ -1,4 +1,4 @@
-# France to IPA: Apion-Cpp-Wasm
+# French to IPA: Apion-Cpp-Wasm
 
 ## English
 
