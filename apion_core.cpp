@@ -7,19 +7,59 @@
 #include <sstream>
 
 // 引入生成的数据文件
-#include "rules_conversion.h"
-// #include "rules_exceptions.h"
-#include "r_exc.h"
+#include "conversionRules.h"
 #include "exceptionLoader.h"
 
 using namespace emscripten;
 
 const std::regex CLEANUP_REGEX(
-    "[0-9•—–,?!\\r’°“”…«»\\\\/\\[\\]\\(\\)<>=+%$&#;:*{}\\'`\\-]"
+    "[0-9•—–,?!\\r’°“”…«»\\\\/\\[\\]\\(\\)<>=+%$&#;:*{}\\'`\\-]",
+    std::regex_constants::optimize
 );
 
+// 定义一个结构体来持有编译后的正则和对应的替换字符串
+struct CompiledRule {
+    std::regex pattern;
+    std::string replacement;
+    
+    // 构造函数：使用移动语义，避免复制昂贵的 regex 对象
+    CompiledRule(std::regex&& p, std::string r) 
+        : pattern(std::move(p)), replacement(std::move(r)) {}
+};
+
+// 全局静态变量：存储所有预编译的规则
+static std::vector<CompiledRule> g_compiled_rules;
+static bool g_rules_initialized = false;
+
+// 初始化函数：只在第一次调用时执行，编译所有规则
+void init_compiled_rules() {
+    if (g_rules_initialized) return;
+
+    const auto& raw_rules = CONVERSION_RULES;
+    g_compiled_rules.reserve(raw_rules.size());
+
+    for (const auto& rule : raw_rules) {
+        const std::string& pattern_str = rule.first;
+        const std::string& replacement = rule.second;
+        
+        try {
+            // 一次性编译正则，而不是在循环里，添加 optimize 标志提示编译器优化
+            std::regex re(pattern_str, std::regex_constants::ECMAScript | std::regex_constants::optimize);
+            g_compiled_rules.emplace_back(std::move(re), replacement);
+        } catch (const std::regex_error& e) {
+            std::cerr << "Regex compile error for pattern: " << pattern_str << std::endl;
+        }
+    }
+    g_rules_initialized = true;
+}
+
+
 std::vector<std::string> apion_process(const std::string& input_text) {
-    std::vector<std::string> result_list;
+
+    // 搞定 g_rules_initialized
+    init_compiled_rules();
+    // 搞定 g_exception_map，不过其实没用到，有接口
+    init_exceptions("exceptions.bin");
 
     // 1. 预处理：转小写
     std::string text = input_text;
@@ -33,15 +73,17 @@ std::vector<std::string> apion_process(const std::string& input_text) {
     // 3. 分词 (按空格分割)
     std::istringstream iss(cleaned);
     std::string mot;
-    
-    // 预加载规则引用，避免重复查找
-    const auto& rules = CONVERSION_RULES;
-    init_exceptions("exceptions.bin");
 
+    // 返回结果，假设日常用语每个单词平均4~5个字母
+    std::vector<std::string> result_list;
+    result_list.reserve(input_text.size() / 5);
+
+    // 复用 match 对象
+    std::smatch match_result;
+    
     while (iss >> mot) {
         std::string current_word = mot;
         std::string result_buffer = "";
-        bool is_exception = false;
 
         // 4. 检查例外词典 
         result_buffer = get_exception(current_word);
@@ -51,32 +93,23 @@ std::vector<std::string> apion_process(const std::string& input_text) {
             while (!current_word.empty()) {
                 bool matched = false;
 
-                // 遍历规则 (对应 rules.each)
-                for (const auto& rule : rules) {
-                    const std::string& pattern = rule.first;
-                    const std::string& replacement = rule.second;
-
-                    try {
-                        // 编译正则 (规则本身已包含 ^)
-                        std::regex re(pattern, std::regex_constants::ECMAScript);
-
-                        // 检查是否匹配 (对应 mot =~ /#{regle}/)
-                        if (std::regex_search(current_word, re)) {
-                            // 匹配成功，执行替换并移除 (对应 mot.sub!)
-                            // regex_replace 返回替换后的字符串，我们将匹配部分替换为 ""
-                            std::string new_word = std::regex_replace(current_word, re, "", std::regex_constants::format_first_only);
-                            
-                            // 只有当字符串确实变短了（说明发生了替换），才视为成功
-                            if (new_word.length() < current_word.length()) {
-                                current_word = new_word;
-                                result_buffer += replacement;
-                                matched = true;
-                                break; // 找到第一个匹配，跳出规则循环，重新开始 while(!current_word.empty())
-                            }
+                for (const auto& compiled_rule : g_compiled_rules) {
+                    // 使用 regex_search 查找匹配
+                    if (std::regex_search(current_word, match_result, compiled_rule.pattern)) {
+                        
+                        // 手动截断字符串
+                        size_t match_len = match_result.length(0);
+                        
+                        if (match_len >= current_word.length()) {
+                            current_word = ""; // 匹配了整个单词
+                        } else {
+                            // 直接截取剩余部分，避免创建临时字符串的开销
+                            current_word = current_word.substr(match_len);
                         }
-                    } catch (const std::regex_error& e) {
-                        // 忽略无效正则，继续下一条
-                        continue;
+
+                        result_buffer += compiled_rule.replacement;
+                        matched = true;
+                        break; // 找到第一个匹配，跳出规则循环，继续处理剩余单词
                     }
                 }
 
