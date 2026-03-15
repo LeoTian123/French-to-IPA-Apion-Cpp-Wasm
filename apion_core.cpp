@@ -12,10 +12,7 @@
 
 using namespace emscripten;
 
-const std::regex CLEANUP_REGEX(
-    "[0-9•—–,?!\\r’°“”…«»\\\\/\\[\\]\\(\\)<>=+%$&#;:*{}\\'`\\-]",
-    std::regex_constants::optimize
-);
+static const std::regex CLEANUP_REGEX("[^A-Za-zéÉàèùÀÈÙâêîôûÂÊÎÔÛëïüÿËÏÜçÇ ]+");
 
 // 定义一个结构体来持有编译后的正则和对应的替换字符串
 struct CompiledRule {
