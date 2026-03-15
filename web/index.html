@@ -170,12 +170,27 @@
             word-wrap: break-word;
             color: #222;
         }
+
+        .data-note {
+            max-width: 600px;
+            background: #f5f7fa;
+            border: 1px solid #d8dee9;
+            color: #555;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
 
     <!-- 1. 标题 -->
     <h1>French to IPA: Apion-Cpp-Wasm</h1>
+
+    <div class="data-note">
+        Note: The pronunciation dictionary is based on older public resources; some entries may be imperfect.
+    </div>
 
     <!-- 2. 输入框 -->
     <textarea id="input" placeholder="Entrez votre texte français ici...">Bonjour le monde! J'aime le français.</textarea>

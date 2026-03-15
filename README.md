@@ -6,7 +6,7 @@
 
 This project can be regarded as a **.cpp to .wasm implementation** of [Apion](https://github.com/coontail/Apion), used to convert French text into IPA phonetic transcription.
 
-Click [here](https://leotian123.github.io/French-to-IPA-Apion-Cpp-Wasm/) to view the presentation.
+A live demo is available [here](https://leotian123.github.io/French-to-IPA-Apion-Cpp-Wasm/).
 
 It is written in C++ and compiled into WebAssembly using Emscripten so that it can be conveniently invoked and executed in a web browser.
 
@@ -15,6 +15,10 @@ The project was developed on a Windows system; some modifications may be require
 The core logic performs lookups in a conversion dictionary. If a lookup fails, a set of regular-expression rules is used to infer the corresponding IPA transcription.
 
 A number of basic optimizations have already been implemented in the code. For example, the rules are compiled only once and stored in advance. Further optimizations such as bucketing or building automata are possible, but they do not seem necessary.
+
+### Note on Pronunciation Data
+
+The pronunciation dictionary used by this project originates from older publicly available resources and may contain inconsistencies or outdated transcriptions. While it generally works well for common words, some entries may be inaccurate, especially for loanwords, rare forms, or edge cases. The generated IPA output should therefore be considered approximate and used with caution.
 
 ### Usage
 
@@ -65,6 +69,10 @@ A number of basic optimizations have already been implemented in the code. For e
 核心逻辑是在一个转换字典中进行查找，如果查找失败，使用一套正则规则推理出IPA。
 
 这个代码基本的优化做了不少，例如规则只编译一次，且提前存储这些规则。进一步的优化就是分桶、上自动机，感觉没有必要了。
+
+### 发音数据说明
+
+本项目所使用的发音词典来源于较早的公开数据资源，其中可能存在不一致或过时的音标标注。对于常见词汇通常能够得到较为合理的结果，但在外来词、罕见词形或一些边缘情况中可能出现不准确的转写。因此，本工具生成的 IPA 结果仅供参考，请谨慎使用。
 
 ### 使用方法
 
